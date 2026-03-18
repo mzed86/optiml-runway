@@ -554,9 +554,9 @@ footer a:hover { text-decoration: underline; }
     <div class="sub">Bessemer metric</div>
   </div>
   <div class="metric-card" id="mc-series-a">
-    <div class="label">Series A Date</div>
+    <div class="label">Fundraise Window</div>
     <div class="value">—</div>
-    <div class="sub">Implied</div>
+    <div class="sub">ARR target met + runway</div>
   </div>
 </section>
 
@@ -1360,9 +1360,16 @@ function updateMetricCards(results) {
   setMetric('mc-efficiency', efficiency.toFixed(2) + 'x',
     efficiency > 1 ? 'var(--accent-green)' : efficiency > 0.5 ? 'var(--accent-amber)' : 'var(--accent-red)');
 
-  // Series A date
-  setMetric('mc-series-a', seriesA.seriesADate,
-    seriesA.fundraiseMonth >= 0 ? 'var(--accent-teal)' : 'var(--accent-red)');
+  // Fundraise window
+  if (seriesA.windowValid) {
+    const from = MONTH_LABELS[seriesA.windowStart];
+    const to = MONTH_LABELS[Math.min(MONTHS - 1, Math.floor(seriesA.windowEnd))];
+    setMetric('mc-series-a', from + ' – ' + to, 'var(--accent-teal)');
+  } else if (seriesA.arrHitMonth < 0) {
+    setMetric('mc-series-a', 'Not in 24mo', 'var(--accent-red)');
+  } else {
+    setMetric('mc-series-a', 'Too tight', 'var(--accent-amber)');
+  }
 }
 
 function setMetric(id, value, color) {
