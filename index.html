@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Optiml AG — Cash Runway Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+/* ============================================================
+   CSS CUSTOM PROPERTIES & RESET
+   ============================================================ */
+:root {
+  --bg-primary: #0f1117;
+  --bg-secondary: #161822;
+  --bg-card: #1a1d27;
+  --bg-card-hover: #1f2233;
+  --bg-slider-section: #141620;
+  --border-color: #2a2d3a;
+  --border-accent: #3a3f52;
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0b0;
+  --text-muted: #6b7185;
+  --accent-blue: #4a9eff;
+  --accent-green: #34d399;
+  --accent-teal: #2dd4bf;
+  --accent-amber: #fbbf24;
+  --accent-red: #f87171;
+  --accent-purple: #a78bfa;
+  --gradient-blue: linear-gradient(135deg, #4a9eff, #6366f1);
+  --gradient-green: linear-gradient(135deg, #34d399, #2dd4bf);
+  --gradient-amber: linear-gradient(135deg, #fbbf24, #f59e0b);
+  --gradient-red: linear-gradient(135deg, #f87171, #ef4444);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-elevated: 0 4px 16px rgba(0,0,0,0.4);
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+header {
+  padding: 24px 32px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.header-left h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.header-left h1 span {
+  color: var(--accent-blue);
+}
+
+.header-left p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.scenario-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.scenario-btn {
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-accent);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scenario-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+.scenario-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+
+/* ============================================================
+   METRIC CARDS
+   ============================================================ */
+#metrics-bar {
+  display: flex;
+  gap: 12px;
+  padding: 20px 32px;
+  overflow-x: auto;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.metric-card {
+  flex: 1;
+  min-width: 140px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-color);
+}
+
+.metric-card .label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.metric-card .value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.metric-card .sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 3px;
+}
+
+/* ============================================================
+   MAIN DASHBOARD LAYOUT
+   ============================================================ */
+#dashboard {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  min-height: calc(100vh - 220px);
+}
+
+/* ============================================================
+   CONTROLS PANEL (SIDEBAR)
+   ============================================================ */
+#controls-panel {
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  padding: 16px;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+  position: sticky;
+  top: 0;
+}
+
+.slider-section {
+  margin-bottom: 8px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.slider-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.slider-section-header:hover { background: var(--bg-card-hover); }
+
+.slider-section-header h3 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
+}
+
+.slider-section-header .chevron {
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+
+.slider-section.collapsed .slider-section-body { display: none; }
+.slider-section.collapsed .chevron { transform: rotate(-90deg); }
+
+.slider-section-body {
+  padding: 12px 14px;
+  background: var(--bg-slider-section);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.slider-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.slider-label-row label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.slider-label-row .slider-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-blue);
+  font-variant-numeric: tabular-nums;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border-color);
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  cursor: pointer;
+}
+
+/* ============================================================
+   CHARTS AREA
+   ============================================================ */
+#charts-area {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.chart-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.chart-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.chart-container {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-card);
+}
+
+.chart-container .chart-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.chart-container .chart-div {
+  width: 100%;
+  height: 280px;
+}
+
+.chart-container.full-width {
+  grid-column: 1 / -1;
+}
+
+.chart-container.full-width .chart-div {
+  height: 340px;
+}
+
+/* ============================================================
+   RUNWAY COUNTDOWN
+   ============================================================ */
+#runway-countdown-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 24px 32px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-card);
+}
+
+#runway-countdown-display .big-number {
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+#runway-countdown-display .big-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+#runway-countdown-display .context-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 220px;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   SERIES A SCORECARD
+   ============================================================ */
+.scorecard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.score-item {
+  background: var(--bg-slider-section);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  border: 1px solid var(--border-color);
+}
+
+.score-item .score-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.score-item .score-value {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.score-item .score-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.score-item .score-status .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot.green { background: var(--accent-green); }
+.dot.amber { background: var(--accent-amber); }
+.dot.red { background: var(--accent-red); }
+
+/* Valuation card */
+.valuation-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.valuation-card .val-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.valuation-card .val-range {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent-teal);
+}
+
+.valuation-card .val-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer {
+  padding: 20px 32px;
+  text-align: center;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+footer p {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+footer a {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+
+footer a:hover { text-decoration: underline; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+  #dashboard {
+    grid-template-columns: 1fr;
+  }
+  #controls-panel {
+    max-height: none;
+    position: static;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .chart-row {
+    grid-template-columns: 1fr;
+  }
+  header {
+    padding: 16px 20px;
+  }
+  #metrics-bar {
+    padding: 16px 20px;
+  }
+  #charts-area {
+    padding: 16px 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .metric-card .value { font-size: 18px; }
+  #runway-countdown-display .big-number { font-size: 48px; }
+  #runway-countdown-display { flex-direction: column; text-align: center; }
+  header { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<header>
+  <div class="header-left">
+    <h1><span>Optiml AG</span> — Cash Runway Model</h1>
+    <p>Post-Seed (EUR 8M, Feb 2026) to Series A — Interactive Scenario Dashboard</p>
+  </div>
+  <div class="scenario-buttons">
+    <button class="scenario-btn" onclick="applyScenario('conservative')">Conservative</button>
+    <button class="scenario-btn active" onclick="applyScenario('base')">Base Case</button>
+    <button class="scenario-btn" onclick="applyScenario('aggressive')">Aggressive</button>
+  </div>
+</header>
+
+<!-- ============================================================
+     METRIC CARDS
+     ============================================================ -->
+<section id="metrics-bar">
+  <div class="metric-card" id="mc-burn">
+    <div class="label">Monthly Burn</div>
+    <div class="value">—</div>
+    <div class="sub">Net of revenue</div>
+  </div>
+  <div class="metric-card" id="mc-runway">
+    <div class="label">Runway</div>
+    <div class="value">—</div>
+    <div class="sub">At current burn</div>
+  </div>
+  <div class="metric-card" id="mc-cash">
+    <div class="label">Cash Balance</div>
+    <div class="value">—</div>
+    <div class="sub">Current month</div>
+  </div>
+  <div class="metric-card" id="mc-arr">
+    <div class="label">ARR</div>
+    <div class="value">—</div>
+    <div class="sub">Annualised</div>
+  </div>
+  <div class="metric-card" id="mc-arr-growth">
+    <div class="label">ARR Growth</div>
+    <div class="value">—</div>
+    <div class="sub">YoY</div>
+  </div>
+  <div class="metric-card" id="mc-efficiency">
+    <div class="label">Cash Efficiency</div>
+    <div class="value">—</div>
+    <div class="sub">Bessemer metric</div>
+  </div>
+  <div class="metric-card" id="mc-series-a">
+    <div class="label">Series A Date</div>
+    <div class="value">—</div>
+    <div class="sub">Implied</div>
+  </div>
+</section>
+
+<!-- ============================================================
+     MAIN DASHBOARD
+     ============================================================ -->
+<main id="dashboard">
+  <!-- CONTROLS SIDEBAR -->
+  <aside id="controls-panel">
+    <!-- Revenue Section -->
+    <div class="slider-section" id="section-revenue">
+      <div class="slider-section-header" onclick="toggleSection('section-revenue')">
+        <h3>Revenue Assumptions</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="slider-section-body" id="sliders-revenue"></div>
+    </div>
+    <!-- Costs Section -->
+    <div class="slider-section" id="section-costs">
+      <div class="slider-section-header" onclick="toggleSection('section-costs')">
+        <h3>Cost Structure</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="slider-section-body" id="sliders-costs"></div>
+    </div>
+    <!-- Cash Section -->
+    <div class="slider-section" id="section-cash">
+      <div class="slider-section-header" onclick="toggleSection('section-cash')">
+        <h3>Cash &amp; FX</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="slider-section-body" id="sliders-cash"></div>
+    </div>
+    <!-- Series A Section -->
+    <div class="slider-section" id="section-seriesa">
+      <div class="slider-section-header" onclick="toggleSection('section-seriesa')">
+        <h3>Series A Triggers</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="slider-section-body" id="sliders-seriesa"></div>
+    </div>
+  </aside>
+
+  <!-- CHARTS AREA -->
+  <div id="charts-area">
+    <!-- REVENUE SECTION -->
+    <div class="chart-section-title">Revenue Build</div>
+    <div class="chart-row">
+      <div class="chart-container">
+        <div class="chart-title">ARR Trajectory</div>
+        <div class="chart-div" id="chart-arr"></div>
+      </div>
+      <div class="chart-container">
+        <div class="chart-title">Cash Receipts vs Recognised Revenue</div>
+        <div class="chart-div" id="chart-receipts"></div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-container">
+        <div class="chart-title">Customer Count Build</div>
+        <div class="chart-div" id="chart-customers"></div>
+      </div>
+      <div class="chart-container">
+        <div class="chart-title">Cost per Employee by Entity (Annual)</div>
+        <div class="chart-div" id="chart-cost-per-emp"></div>
+      </div>
+    </div>
+
+    <!-- COST SECTION -->
+    <div class="chart-section-title">Cost Structure (3-Entity)</div>
+    <div class="chart-row">
+      <div class="chart-container">
+        <div class="chart-title">Monthly Burn by Category</div>
+        <div class="chart-div" id="chart-burn"></div>
+      </div>
+      <div class="chart-container">
+        <div class="chart-title">Headcount Growth by Entity</div>
+        <div class="chart-div" id="chart-headcount"></div>
+      </div>
+    </div>
+
+    <!-- CASH & RUNWAY SECTION -->
+    <div class="chart-section-title">Cash &amp; Runway</div>
+    <div class="chart-row">
+      <div class="chart-container full-width">
+        <div class="chart-title">Cash Balance Projection</div>
+        <div class="chart-div" id="chart-cash"></div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div id="runway-countdown-display">
+        <div>
+          <div class="big-number" id="runway-big-number">—</div>
+          <div class="big-label">months of runway</div>
+        </div>
+        <div class="context-text" id="runway-context">Adjust sliders to model different scenarios and see how runway changes.</div>
+      </div>
+      <div class="chart-container">
+        <div class="chart-title">FX Sensitivity — Annual Cost Impact</div>
+        <div class="chart-div" id="chart-fx"></div>
+      </div>
+    </div>
+
+    <!-- SERIES A SECTION -->
+    <div class="chart-section-title">Series A Trigger Dashboard</div>
+    <div class="chart-row">
+      <div class="chart-container">
+        <div class="chart-title">Readiness Scorecard</div>
+        <div class="scorecard-grid" id="scorecard"></div>
+      </div>
+      <div class="valuation-card" id="valuation-display">
+        <div class="val-label">Implied Series A Valuation Range</div>
+        <div class="val-range" id="val-range-text">—</div>
+        <div class="val-sub" id="val-sub-text">Based on ARR at fundraise × 15-30x multiple</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer>
+  <p>Built by <strong>Michael Zafiropoulos</strong> · CA(SA), MBA · <a href="mailto:michael@zafiropoulos.co.za">michael@zafiropoulos.co.za</a> · All calculations run client-side — no data leaves your browser.</p>
+</footer>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+/* ============================================================
+   1. CONSTANTS
+   ============================================================ */
+const MONTHS = 24;
+const START_DATE = new Date(2026, 2); // Mar 2026
+const MONTH_LABELS = Array.from({length: MONTHS}, (_, i) => {
+  const d = new Date(2026, 2 + i);
+  return d.toLocaleDateString('en-GB', {month: 'short', year: '2-digit'});
+});
+
+// All-in employer costs (annual, EUR) from structuring memo
+const COST_ZH = 160000; // CHF ~153,600 ≈ EUR 160K
+const COST_DE = 109500;
+const COST_UK = 110000; // GBP ~95,400 ≈ EUR 110K
+
+// Fixed monthly costs
+const OFFICE_ZH = 3000;
+const OFFICE_DE = 2000;
+const OFFICE_UK = 4000;
+const LEGAL_ACCOUNTING = 8000;
+const BUFFER_PCT = 0.05;
+
+// Starting state
+const STARTING_CASH = 7700000; // EUR 8M - 300K
+const EXISTING_ARR = 200000;
+const STARTING_HC = { zh: 15, de: 8, uk: 5 };
+
+/* ============================================================
+   2. SLIDER DEFINITIONS
+   ============================================================ */
+const SLIDER_DEFS = [
+  // Revenue
+  { id: 'acv', label: 'New Enterprise ACV', default: 80, min: 30, max: 200, step: 5, section: 'revenue', format: 'eurK' },
+  { id: 'conversionRate', label: 'Pilot-to-Paid Conversion', default: 40, min: 10, max: 80, step: 5, section: 'revenue', format: 'pct' },
+  { id: 'pilotsPerQ', label: 'New Pilots per Quarter', default: 4, min: 1, max: 12, step: 1, section: 'revenue', format: 'int' },
+  { id: 'nrr', label: 'Net Revenue Retention', default: 110, min: 80, max: 150, step: 5, section: 'revenue', format: 'pct' },
+  { id: 'daysToCollect', label: 'Avg Days to Collect', default: 60, min: 30, max: 120, step: 5, section: 'revenue', format: 'days' },
+  // Costs
+  { id: 'hiresPerQ', label: 'New Hires per Quarter', default: 3, min: 0, max: 8, step: 1, section: 'costs', format: 'int' },
+  { id: 'hirePctZH', label: '% Hires in Zurich', default: 40, min: 0, max: 100, step: 5, section: 'costs', format: 'pct' },
+  { id: 'hirePctDE', label: '% Hires in Germany', default: 35, min: 0, max: 100, step: 5, section: 'costs', format: 'pct' },
+  { id: 'rampMonths', label: 'Months to Full Productivity', default: 4, min: 2, max: 8, step: 1, section: 'costs', format: 'months' },
+  { id: 'cloudSpend', label: 'Monthly Cloud Spend', default: 15, min: 5, max: 50, step: 1, section: 'costs', format: 'eurK' },
+  { id: 'marketingSpend', label: 'Monthly Marketing Spend', default: 20, min: 5, max: 60, step: 1, section: 'costs', format: 'eurK' },
+  // Cash & FX
+  { id: 'eurChf', label: 'EUR/CHF Rate', default: 0.93, min: 0.80, max: 1.05, step: 0.01, section: 'cash', format: 'fx' },
+  { id: 'eurGbp', label: 'EUR/GBP Rate', default: 0.86, min: 0.75, max: 0.95, step: 0.01, section: 'cash', format: 'fx' },
+  { id: 'rdTaxCredits', label: 'R&D Tax Credits (Annual)', default: 150, min: 0, max: 500, step: 10, section: 'cash', format: 'eurK' },
+  { id: 'grantIncome', label: 'Grant Income (One-Off)', default: 0, min: 0, max: 500, step: 25, section: 'cash', format: 'eurK' },
+  // Series A
+  { id: 'targetARR', label: 'Target Series A ARR', default: 1500, min: 500, max: 5000, step: 100, section: 'seriesa', format: 'eurK' },
+  { id: 'minRunwayAtSA', label: 'Min Runway at Series A', default: 9, min: 3, max: 18, step: 1, section: 'seriesa', format: 'months' },
+];
+
+/* ============================================================
+   3. SCENARIO PRESETS
+   ============================================================ */
+const SCENARIOS = {
+  conservative: {
+    acv: 60, conversionRate: 20, pilotsPerQ: 2, nrr: 95, daysToCollect: 90,
+    hiresPerQ: 1, hirePctZH: 50, hirePctDE: 30, rampMonths: 6,
+    cloudSpend: 10, marketingSpend: 10,
+    eurChf: 0.85, eurGbp: 0.80, rdTaxCredits: 50, grantIncome: 0,
+    targetARR: 2000, minRunwayAtSA: 12,
+  },
+  base: Object.fromEntries(SLIDER_DEFS.map(s => [s.id, s.default])),
+  aggressive: {
+    acv: 120, conversionRate: 60, pilotsPerQ: 6, nrr: 130, daysToCollect: 45,
+    hiresPerQ: 6, hirePctZH: 30, hirePctDE: 40, rampMonths: 3,
+    cloudSpend: 25, marketingSpend: 40,
+    eurChf: 0.97, eurGbp: 0.90, rdTaxCredits: 300, grantIncome: 200,
+    targetARR: 1000, minRunwayAtSA: 6,
+  },
+};
+
+/* ============================================================
+   4. STATE MANAGEMENT
+   ============================================================ */
+let state = {};
+
+function initState() {
+  state = { ...SCENARIOS.base };
+}
+
+function setState(partial) {
+  Object.assign(state, partial);
+  scheduleRecalculate();
+}
+
+let rafId = null;
+function scheduleRecalculate() {
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(() => {
+    rafId = null;
+    recalculate();
+  });
+}
+
+/* ============================================================
+   5. FINANCIAL MODEL — Pure functions
+   ============================================================ */
+
+function calculateRevenue(s) {
+  const monthlyNRR = Math.pow(s.nrr / 100, 1 / 12);
+  const convRate = s.conversionRate / 100;
+  const lagMonths = Math.ceil(s.daysToCollect / 30);
+  const acv = s.acv * 1000;
+  const mrr0 = EXISTING_ARR / 12;
+
+  const arr = [];
+  const mrr = [];
+  const cashReceipts = [];
+  const recognisedRevenue = [];
+  const pilots = [];
+  const paidCustomers = [];
+  const churned = [];
+
+  let existingMRR = mrr0;
+  let totalPaid = Math.round(EXISTING_ARR / acv) || 3; // assume ~3 existing customers
+  let totalChurned = 0;
+  let cumulativePilots = 0;
+
+  // Track cohorts: each quarter's pilots, when they convert
+  const cohorts = []; // {startMonth, count, convertMonth}
+
+  for (let m = 0; m < MONTHS; m++) {
+    // New pilots arrive at quarter boundaries
+    if (m % 3 === 0) {
+      const newPilots = s.pilotsPerQ;
+      cumulativePilots += newPilots;
+      cohorts.push({
+        startMonth: m,
+        count: newPilots,
+        convertMonth: m + 9, // 9-month sales cycle
+      });
+    }
+
+    // Convert cohorts that have matured
+    let newConversions = 0;
+    for (const cohort of cohorts) {
+      if (cohort.convertMonth === m && cohort.count > 0) {
+        const converting = Math.round(cohort.count * convRate);
+        newConversions += converting;
+        cumulativePilots -= cohort.count; // pilots exit pilot phase
+        totalPaid += converting;
+        // Non-converting pilots are lost
+      }
+    }
+
+    // NRR applied to existing base
+    if (monthlyNRR < 1) {
+      const churnThis = existingMRR * (1 - monthlyNRR);
+      if (churnThis > acv / 24) { // meaningful churn
+        totalChurned += churnThis / (acv / 12);
+      }
+    }
+    existingMRR *= monthlyNRR;
+
+    // Add new conversions to MRR
+    const newMRR = newConversions * (acv / 12);
+    existingMRR += newMRR;
+
+    mrr.push(existingMRR);
+    arr.push(existingMRR * 12);
+    recognisedRevenue.push(existingMRR);
+
+    // Cash receipts lag by collection period
+    if (m >= lagMonths) {
+      cashReceipts.push(mrr[m - lagMonths]);
+    } else {
+      cashReceipts.push(mrr0 * 0.8); // partial collection of pre-existing
+    }
+
+    pilots.push(Math.max(0, cumulativePilots));
+    paidCustomers.push(Math.max(0, Math.round(totalPaid)));
+    churned.push(Math.max(0, Math.round(totalChurned)));
+  }
+
+  return { arr, mrr, cashReceipts, recognisedRevenue, pilots, paidCustomers, churned };
+}
+
+function calculateCosts(s) {
+  const hirePctZH = s.hirePctZH / 100;
+  const hirePctDE = s.hirePctDE / 100;
+  const hirePctUK = Math.max(0, 1 - hirePctZH - hirePctDE);
+
+  const hcZH = [], hcDE = [], hcUK = [];
+  const costZH = [], costDE = [], costUK = [];
+  const costCloud = [], costMarketing = [], costOther = [];
+  const totalBurn = [];
+
+  let currentZH = STARTING_HC.zh;
+  let currentDE = STARTING_HC.de;
+  let currentUK = STARTING_HC.uk;
+
+  for (let m = 0; m < MONTHS; m++) {
+    // Hire at quarter boundaries
+    if (m > 0 && m % 3 === 0) {
+      const total = s.hiresPerQ;
+      currentZH += Math.round(total * hirePctZH);
+      currentDE += Math.round(total * hirePctDE);
+      currentUK += Math.round(total * hirePctUK);
+    }
+
+    hcZH.push(currentZH);
+    hcDE.push(currentDE);
+    hcUK.push(currentUK);
+
+    const mCostZH = currentZH * COST_ZH / 12;
+    const mCostDE = currentDE * COST_DE / 12;
+    const mCostUK = currentUK * COST_UK / 12;
+    const mOffice = (currentZH > 0 ? OFFICE_ZH : 0) + (currentDE > 0 ? OFFICE_DE : 0) + (currentUK > 0 ? OFFICE_UK : 0);
+    const mCloud = s.cloudSpend * 1000;
+    const mMarketing = s.marketingSpend * 1000;
+    const mOther = LEGAL_ACCOUNTING;
+    const subtotal = mCostZH + mCostDE + mCostUK + mOffice + mCloud + mMarketing + mOther;
+    const buffer = subtotal * BUFFER_PCT;
+
+    costZH.push(mCostZH + (currentZH > 0 ? OFFICE_ZH : 0));
+    costDE.push(mCostDE + (currentDE > 0 ? OFFICE_DE : 0));
+    costUK.push(mCostUK + (currentUK > 0 ? OFFICE_UK : 0));
+    costCloud.push(mCloud);
+    costMarketing.push(mMarketing);
+    costOther.push(mOther + buffer);
+    totalBurn.push(subtotal + buffer);
+  }
+
+  return { hcZH, hcDE, hcUK, costZH, costDE, costUK, costCloud, costMarketing, costOther, totalBurn };
+}
+
+function calculateCashRunway(s, rev, costs) {
+  const cash = [];
+  const monthlyTaxCredit = (s.rdTaxCredits * 1000) / 12;
+  const grantMonth = 6;
+  const grantAmount = s.grantIncome * 1000;
+
+  let balance = STARTING_CASH;
+
+  for (let m = 0; m < MONTHS; m++) {
+    cash.push(balance);
+
+    // FX adjustment: ZH costs denominated in CHF, UK in GBP
+    // Higher EUR/CHF rate = EUR buys more CHF = cheaper for Optiml
+    const fxAdjustedZH = costs.costZH[m] / s.eurChf;
+    const fxAdjustedUK = costs.costUK[m] / s.eurGbp;
+    const fxAdjustedBurn = fxAdjustedZH + costs.costDE[m] + fxAdjustedUK +
+                           costs.costCloud[m] + costs.costMarketing[m] + costs.costOther[m];
+
+    const inflow = rev.cashReceipts[m] + monthlyTaxCredit + (m === grantMonth ? grantAmount : 0);
+    balance = balance + inflow - fxAdjustedBurn;
+  }
+
+  // Calculate runway: interpolate to zero-crossing
+  let runwayMonths = MONTHS;
+  for (let m = 1; m < cash.length; m++) {
+    if (cash[m] <= 0 && cash[m - 1] > 0) {
+      runwayMonths = m - 1 + cash[m - 1] / (cash[m - 1] - cash[m]);
+      break;
+    }
+  }
+  // If never crosses zero but last month is positive
+  if (cash[MONTHS - 1] > 0) runwayMonths = MONTHS;
+
+  return { cash, runwayMonths };
+}
+
+function calculateSeriesA(s, rev, cashData) {
+  const targetARR = s.targetARR * 1000;
+
+  // Find month where ARR >= target
+  let arrHitMonth = -1;
+  for (let m = 0; m < MONTHS; m++) {
+    if (rev.arr[m] >= targetARR) {
+      arrHitMonth = m;
+      break;
+    }
+  }
+
+  // Fundraise window
+  const windowStart = arrHitMonth >= 0 ? Math.max(0, arrHitMonth - 6) : -1;
+  const windowEnd = Math.floor(cashData.runwayMonths) - s.minRunwayAtSA;
+  const windowValid = windowStart >= 0 && windowEnd > windowStart;
+
+  // ARR at optimal fundraise point
+  const fundraiseMonth = windowValid ? Math.min(arrHitMonth, Math.floor(windowEnd)) : -1;
+  const arrAtFundraise = fundraiseMonth >= 0 ? rev.arr[fundraiseMonth] : 0;
+
+  // Valuation range (15-30x ARR)
+  const valLow = arrAtFundraise * 15;
+  const valHigh = arrAtFundraise * 30;
+
+  // Scorecard
+  const currentARR = rev.arr[MONTHS - 1];
+  const arrMonth12 = rev.arr[Math.min(11, MONTHS - 1)];
+  const arrGrowth = arrMonth12 > 0 ? ((currentARR / arrMonth12) - 1) * 100 : 0;
+
+  // Series A date as calendar
+  let seriesADate = 'Beyond horizon';
+  if (fundraiseMonth >= 0) {
+    const d = new Date(2026, 2 + fundraiseMonth);
+    seriesADate = d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+  }
+
+  return {
+    arrHitMonth,
+    windowStart,
+    windowEnd: Math.max(0, windowEnd),
+    windowValid,
+    fundraiseMonth,
+    arrAtFundraise,
+    valLow,
+    valHigh,
+    currentARR,
+    arrGrowth,
+    seriesADate,
+  };
+}
+
+function calculateFXSensitivity(s, costs) {
+  // Calculate annual cost at base, +10%, -10% for each FX pair
+  function annualFXCost(chfRate, gbpRate) {
+    let total = 0;
+    for (let m = 0; m < 12; m++) {
+      total += costs.costZH[m] / chfRate + costs.costUK[m] / gbpRate +
+               costs.costDE[m] + costs.costCloud[m] + costs.costMarketing[m] + costs.costOther[m];
+    }
+    return total;
+  }
+  const base = annualFXCost(s.eurChf, s.eurGbp);
+  const chfUp = annualFXCost(s.eurChf * 1.1, s.eurGbp) - base;
+  const chfDown = annualFXCost(s.eurChf * 0.9, s.eurGbp) - base;
+  const gbpUp = annualFXCost(s.eurChf, s.eurGbp * 1.1) - base;
+  const gbpDown = annualFXCost(s.eurChf, s.eurGbp * 0.9) - base;
+
+  return { base, chfUp, chfDown, gbpUp, gbpDown };
+}
+
+function calculateAll(s) {
+  const rev = calculateRevenue(s);
+  const costs = calculateCosts(s);
+  const cashData = calculateCashRunway(s, rev, costs);
+  const seriesA = calculateSeriesA(s, rev, cashData);
+  const fx = calculateFXSensitivity(s, costs);
+  return { rev, costs, cashData, seriesA, fx };
+}
+
+/* ============================================================
+   6. FORMATTERS
+   ============================================================ */
+function fmtEUR(v) {
+  if (Math.abs(v) >= 1e6) return '€' + (v / 1e6).toFixed(1) + 'M';
+  if (Math.abs(v) >= 1e3) return '€' + (v / 1e3).toFixed(0) + 'K';
+  return '€' + Math.round(v);
+}
+
+function fmtPct(v) { return v.toFixed(0) + '%'; }
+function fmtMonths(v) { return v.toFixed(1) + ' mo'; }
+function fmtSlider(def, val) {
+  switch (def.format) {
+    case 'eurK': return '€' + Number(val).toLocaleString() + 'K';
+    case 'pct': return val + '%';
+    case 'int': return val;
+    case 'days': return val + ' days';
+    case 'months': return val + ' mo';
+    case 'fx': return Number(val).toFixed(2);
+    default: return val;
+  }
+}
+
+/* ============================================================
+   7. CHART RENDERING
+   ============================================================ */
+const PLOTLY_LAYOUT_BASE = {
+  paper_bgcolor: 'rgba(0,0,0,0)',
+  plot_bgcolor: 'rgba(0,0,0,0)',
+  font: { family: 'Inter, sans-serif', color: '#9aa0b0', size: 11 },
+  margin: { l: 55, r: 20, t: 10, b: 35 },
+  xaxis: {
+    gridcolor: '#2a2d3a',
+    tickfont: { size: 10 },
+    zeroline: false,
+  },
+  yaxis: {
+    gridcolor: '#2a2d3a',
+    tickfont: { size: 10 },
+    zeroline: false,
+    tickprefix: '€',
+  },
+  legend: {
+    orientation: 'h',
+    y: -0.18,
+    x: 0.5,
+    xanchor: 'center',
+    font: { size: 10 },
+  },
+  hovermode: 'x unified',
+};
+
+const PLOTLY_CONFIG = { responsive: true, displayModeBar: false };
+
+function getLayout(overrides = {}) {
+  return {
+    ...PLOTLY_LAYOUT_BASE,
+    ...overrides,
+    xaxis: { ...PLOTLY_LAYOUT_BASE.xaxis, ...(overrides.xaxis || {}) },
+    yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, ...(overrides.yaxis || {}) },
+    legend: { ...PLOTLY_LAYOUT_BASE.legend, ...(overrides.legend || {}) },
+    margin: { ...PLOTLY_LAYOUT_BASE.margin, ...(overrides.margin || {}) },
+  };
+}
+
+function renderARRChart(rev) {
+  const data = [{
+    x: MONTH_LABELS,
+    y: rev.arr,
+    type: 'scatter',
+    mode: 'lines',
+    fill: 'tozeroy',
+    fillcolor: 'rgba(74, 158, 255, 0.15)',
+    line: { color: '#4a9eff', width: 2.5 },
+    name: 'ARR',
+    hovertemplate: '€%{y:,.0f}<extra></extra>',
+  }];
+  Plotly.react('chart-arr', data, getLayout(), PLOTLY_CONFIG);
+}
+
+function renderReceiptsChart(rev) {
+  const data = [
+    {
+      x: MONTH_LABELS,
+      y: rev.recognisedRevenue,
+      type: 'scatter',
+      fill: 'tozeroy',
+      fillcolor: 'rgba(74, 158, 255, 0.12)',
+      line: { color: '#4a9eff', width: 2 },
+      name: 'Recognised Revenue',
+      hovertemplate: '€%{y:,.0f}<extra></extra>',
+    },
+    {
+      x: MONTH_LABELS,
+      y: rev.cashReceipts,
+      type: 'scatter',
+      fill: 'tozeroy',
+      fillcolor: 'rgba(52, 211, 153, 0.12)',
+      line: { color: '#34d399', width: 2 },
+      name: 'Cash Receipts',
+      hovertemplate: '€%{y:,.0f}<extra></extra>',
+    },
+  ];
+  Plotly.react('chart-receipts', data, getLayout(), PLOTLY_CONFIG);
+}
+
+function renderCustomerChart(rev) {
+  const data = [
+    {
+      x: MONTH_LABELS,
+      y: rev.pilots,
+      type: 'scatter',
+      fill: 'tozeroy',
+      fillcolor: 'rgba(167, 139, 250, 0.15)',
+      line: { color: '#a78bfa', width: 2 },
+      name: 'Active Pilots',
+      stackgroup: 'one',
+      hovertemplate: '%{y}<extra></extra>',
+    },
+    {
+      x: MONTH_LABELS,
+      y: rev.paidCustomers,
+      type: 'scatter',
+      fill: 'tonexty',
+      fillcolor: 'rgba(52, 211, 153, 0.15)',
+      line: { color: '#34d399', width: 2 },
+      name: 'Paid Customers',
+      stackgroup: 'one',
+      hovertemplate: '%{y}<extra></extra>',
+    },
+    {
+      x: MONTH_LABELS,
+      y: rev.churned,
+      type: 'scatter',
+      fill: 'tonexty',
+      fillcolor: 'rgba(248, 113, 113, 0.15)',
+      line: { color: '#f87171', width: 2 },
+      name: 'Churned',
+      stackgroup: 'one',
+      hovertemplate: '%{y}<extra></extra>',
+    },
+  ];
+  Plotly.react('chart-customers', data, getLayout({
+    yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, tickprefix: '' },
+  }), PLOTLY_CONFIG);
+}
+
+function renderBurnChart(costs) {
+  const data = [
+    { x: MONTH_LABELS, y: costs.costZH, type: 'bar', name: 'Zurich', marker: { color: '#4a9eff' }, hovertemplate: '€%{y:,.0f}<extra></extra>' },
+    { x: MONTH_LABELS, y: costs.costDE, type: 'bar', name: 'Germany', marker: { color: '#34d399' }, hovertemplate: '€%{y:,.0f}<extra></extra>' },
+    { x: MONTH_LABELS, y: costs.costUK, type: 'bar', name: 'UK', marker: { color: '#a78bfa' }, hovertemplate: '€%{y:,.0f}<extra></extra>' },
+    { x: MONTH_LABELS, y: costs.costCloud, type: 'bar', name: 'Cloud', marker: { color: '#2dd4bf' }, hovertemplate: '€%{y:,.0f}<extra></extra>' },
+    { x: MONTH_LABELS, y: costs.costMarketing, type: 'bar', name: 'Marketing', marker: { color: '#fbbf24' }, hovertemplate: '€%{y:,.0f}<extra></extra>' },
+    { x: MONTH_LABELS, y: costs.costOther, type: 'bar', name: 'Other', marker: { color: '#6b7185' }, hovertemplate: '€%{y:,.0f}<extra></extra>' },
+  ];
+  Plotly.react('chart-burn', data, getLayout({ barmode: 'stack' }), PLOTLY_CONFIG);
+}
+
+function renderHeadcountChart(costs) {
+  const data = [
+    {
+      x: MONTH_LABELS, y: costs.hcZH,
+      type: 'scatter', fill: 'tozeroy', stackgroup: 'one',
+      fillcolor: 'rgba(74, 158, 255, 0.2)', line: { color: '#4a9eff', width: 2 },
+      name: 'Zurich', hovertemplate: '%{y}<extra></extra>',
+    },
+    {
+      x: MONTH_LABELS, y: costs.hcDE,
+      type: 'scatter', fill: 'tonexty', stackgroup: 'one',
+      fillcolor: 'rgba(52, 211, 153, 0.2)', line: { color: '#34d399', width: 2 },
+      name: 'Germany', hovertemplate: '%{y}<extra></extra>',
+    },
+    {
+      x: MONTH_LABELS, y: costs.hcUK,
+      type: 'scatter', fill: 'tonexty', stackgroup: 'one',
+      fillcolor: 'rgba(167, 139, 250, 0.2)', line: { color: '#a78bfa', width: 2 },
+      name: 'UK', hovertemplate: '%{y}<extra></extra>',
+    },
+  ];
+  Plotly.react('chart-headcount', data, getLayout({
+    yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, tickprefix: '' },
+  }), PLOTLY_CONFIG);
+}
+
+function renderCostPerEmpChart() {
+  const data = [{
+    x: ['Zurich', 'Germany', 'UK'],
+    y: [COST_ZH, COST_DE, COST_UK],
+    type: 'bar',
+    marker: { color: ['#4a9eff', '#34d399', '#a78bfa'], cornerradius: 4 },
+    hovertemplate: '€%{y:,.0f}<extra></extra>',
+    text: ['€160K', '€110K', '€110K'],
+    textposition: 'outside',
+    textfont: { color: '#9aa0b0', size: 12, family: 'Inter' },
+  }];
+  Plotly.react('chart-cost-per-emp', data, getLayout({
+    yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, range: [0, 200000] },
+    xaxis: { ...PLOTLY_LAYOUT_BASE.xaxis, type: 'category' },
+  }), PLOTLY_CONFIG);
+}
+
+function renderCashChart(cashData, costs, seriesA) {
+  // Danger zone: cash < 6 months of current burn
+  const dangerThreshold = costs.totalBurn.map(b => b * 6);
+
+  const shapes = [];
+
+  // Series A fundraise window overlay
+  if (seriesA.windowValid) {
+    shapes.push({
+      type: 'rect',
+      xref: 'x',
+      yref: 'paper',
+      x0: MONTH_LABELS[Math.max(0, seriesA.windowStart)],
+      x1: MONTH_LABELS[Math.min(MONTHS - 1, Math.floor(seriesA.windowEnd))],
+      y0: 0,
+      y1: 1,
+      fillcolor: 'rgba(45, 212, 191, 0.08)',
+      line: { color: 'rgba(45, 212, 191, 0.3)', width: 1, dash: 'dash' },
+    });
+  }
+
+  const data = [
+    {
+      x: MONTH_LABELS,
+      y: cashData.cash,
+      type: 'scatter',
+      fill: 'tozeroy',
+      fillcolor: 'rgba(74, 158, 255, 0.12)',
+      line: { color: '#4a9eff', width: 2.5 },
+      name: 'Cash Balance',
+      hovertemplate: '€%{y:,.0f}<extra></extra>',
+    },
+    {
+      x: MONTH_LABELS,
+      y: dangerThreshold,
+      type: 'scatter',
+      mode: 'lines',
+      line: { color: '#f87171', width: 1.5, dash: 'dot' },
+      name: 'Danger Zone (6mo burn)',
+      hovertemplate: '€%{y:,.0f}<extra></extra>',
+    },
+  ];
+
+  Plotly.react('chart-cash', data, getLayout({
+    shapes,
+    annotations: seriesA.windowValid ? [{
+      x: MONTH_LABELS[Math.round((seriesA.windowStart + Math.min(MONTHS - 1, Math.floor(seriesA.windowEnd))) / 2)],
+      y: 1,
+      yref: 'paper',
+      text: 'Fundraise Window',
+      showarrow: false,
+      font: { color: '#2dd4bf', size: 11 },
+      yanchor: 'bottom',
+    }] : [],
+  }), PLOTLY_CONFIG);
+}
+
+function renderFXChart(fx) {
+  const data = [{
+    y: ['EUR/GBP +10%', 'EUR/GBP -10%', 'EUR/CHF +10%', 'EUR/CHF -10%'],
+    x: [fx.gbpUp, fx.gbpDown, fx.chfUp, fx.chfDown],
+    type: 'bar',
+    orientation: 'h',
+    marker: {
+      color: [
+        fx.gbpUp < 0 ? '#34d399' : '#f87171',
+        fx.gbpDown < 0 ? '#34d399' : '#f87171',
+        fx.chfUp < 0 ? '#34d399' : '#f87171',
+        fx.chfDown < 0 ? '#34d399' : '#f87171',
+      ],
+    },
+    hovertemplate: '€%{x:,.0f}<extra></extra>',
+    text: [fmtEUR(fx.gbpUp), fmtEUR(fx.gbpDown), fmtEUR(fx.chfUp), fmtEUR(fx.chfDown)],
+    textposition: 'outside',
+    textfont: { color: '#9aa0b0', size: 11 },
+  }];
+  Plotly.react('chart-fx', data, getLayout({
+    xaxis: { ...PLOTLY_LAYOUT_BASE.xaxis, zeroline: true, zerolinecolor: '#3a3f52' },
+    yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, tickprefix: '', automargin: true },
+    margin: { ...PLOTLY_LAYOUT_BASE.margin, l: 100 },
+  }), PLOTLY_CONFIG);
+}
+
+/* ============================================================
+   8. METRIC CARDS
+   ============================================================ */
+function updateMetricCards(results) {
+  const { rev, costs, cashData, seriesA } = results;
+  const m = 0; // current month
+  const lastM = MONTHS - 1;
+
+  // Monthly net burn (costs - revenue) at current month
+  const netBurn = costs.totalBurn[m] - rev.cashReceipts[m];
+  setMetric('mc-burn', fmtEUR(netBurn), netBurn > 300000 ? 'var(--accent-red)' : 'var(--accent-amber)');
+
+  // Runway
+  const runwayColor = cashData.runwayMonths > 18 ? 'var(--accent-green)' :
+                      cashData.runwayMonths > 12 ? 'var(--accent-amber)' : 'var(--accent-red)';
+  setMetric('mc-runway', cashData.runwayMonths >= MONTHS ? '24+ mo' : fmtMonths(cashData.runwayMonths), runwayColor);
+
+  // Cash balance
+  setMetric('mc-cash', fmtEUR(cashData.cash[m]));
+
+  // ARR (current month)
+  setMetric('mc-arr', fmtEUR(rev.arr[m]));
+
+  // ARR Growth YoY (month 12 vs month 0)
+  const arrGrowth = rev.arr[0] > 0 ? ((rev.arr[Math.min(11, lastM)] / rev.arr[0]) - 1) * 100 : 0;
+  setMetric('mc-arr-growth', fmtPct(arrGrowth),
+    arrGrowth > 100 ? 'var(--accent-green)' : 'var(--accent-amber)');
+
+  // Cash efficiency (Bessemer: net new ARR / net burn)
+  const netNewARR = rev.arr[Math.min(11, lastM)] - rev.arr[0];
+  const totalNetBurn = costs.totalBurn.slice(0, 12).reduce((a, b) => a + b, 0) -
+                       rev.cashReceipts.slice(0, 12).reduce((a, b) => a + b, 0);
+  const efficiency = totalNetBurn > 0 ? netNewARR / totalNetBurn : 0;
+  setMetric('mc-efficiency', efficiency.toFixed(2) + 'x',
+    efficiency > 1 ? 'var(--accent-green)' : efficiency > 0.5 ? 'var(--accent-amber)' : 'var(--accent-red)');
+
+  // Series A date
+  setMetric('mc-series-a', seriesA.seriesADate,
+    seriesA.fundraiseMonth >= 0 ? 'var(--accent-teal)' : 'var(--accent-red)');
+}
+
+function setMetric(id, value, color) {
+  const el = document.getElementById(id);
+  const valEl = el.querySelector('.value');
+  valEl.textContent = value;
+  if (color) valEl.style.color = color;
+  else valEl.style.color = '';
+}
+
+/* ============================================================
+   8b. RUNWAY COUNTDOWN & SCORECARD
+   ============================================================ */
+function updateRunwayCountdown(cashData, costs) {
+  const el = document.getElementById('runway-big-number');
+  const ctx = document.getElementById('runway-context');
+  const months = cashData.runwayMonths;
+  const display = months >= MONTHS ? '24+' : months.toFixed(1);
+  el.textContent = display;
+
+  if (months > 18) {
+    el.style.color = 'var(--accent-green)';
+    ctx.textContent = 'Healthy runway. Focus on growth metrics and Series A preparation.';
+  } else if (months > 12) {
+    el.style.color = 'var(--accent-amber)';
+    ctx.textContent = 'Moderate runway. Begin Series A preparations and monitor burn closely.';
+  } else {
+    el.style.color = 'var(--accent-red)';
+    ctx.textContent = 'Critical. Reduce burn or accelerate revenue. Fundraise urgently.';
+  }
+}
+
+function updateScorecard(seriesA, cashData, s) {
+  const targetARR = s.targetARR * 1000;
+  const arrReached = seriesA.arrHitMonth >= 0;
+  const growthOK = seriesA.arrGrowth > 100;
+  const runwayOK = cashData.runwayMonths > s.minRunwayAtSA + 6;
+  const windowOK = seriesA.windowValid;
+
+  const items = [
+    {
+      label: 'ARR Target',
+      value: fmtEUR(targetARR),
+      status: arrReached ? 'On track' : 'Not yet reached',
+      color: arrReached ? 'green' : 'red',
+    },
+    {
+      label: 'ARR Growth (YoY)',
+      value: fmtPct(seriesA.arrGrowth),
+      status: growthOK ? 'Strong growth' : 'Below target',
+      color: growthOK ? 'green' : seriesA.arrGrowth > 50 ? 'amber' : 'red',
+    },
+    {
+      label: 'Runway Buffer',
+      value: cashData.runwayMonths >= MONTHS ? '24+ mo' : fmtMonths(cashData.runwayMonths),
+      status: runwayOK ? 'Sufficient' : 'Tight',
+      color: runwayOK ? 'green' : 'amber',
+    },
+    {
+      label: 'Fundraise Window',
+      value: windowOK ? 'Open' : 'Closed',
+      status: windowOK ?
+        MONTH_LABELS[seriesA.windowStart] + ' – ' + MONTH_LABELS[Math.min(MONTHS - 1, Math.floor(seriesA.windowEnd))] :
+        'Insufficient runway or ARR',
+      color: windowOK ? 'green' : 'red',
+    },
+  ];
+
+  const html = items.map(it => `
+    <div class="score-item">
+      <div class="score-label">${it.label}</div>
+      <div class="score-value" style="color: var(--accent-${it.color})">${it.value}</div>
+      <div class="score-status"><span class="dot ${it.color}"></span>${it.status}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('scorecard').innerHTML = html;
+
+  // Valuation
+  if (seriesA.fundraiseMonth >= 0 && seriesA.arrAtFundraise > 0) {
+    document.getElementById('val-range-text').textContent =
+      fmtEUR(seriesA.valLow) + ' – ' + fmtEUR(seriesA.valHigh);
+    document.getElementById('val-sub-text').textContent =
+      'Based on ' + fmtEUR(seriesA.arrAtFundraise) + ' ARR at fundraise × 15-30x multiple';
+    document.getElementById('val-range-text').style.color = 'var(--accent-teal)';
+  } else {
+    document.getElementById('val-range-text').textContent = 'ARR target not reached in horizon';
+    document.getElementById('val-range-text').style.color = 'var(--accent-red)';
+    document.getElementById('val-sub-text').textContent = 'Adjust revenue assumptions or lower target ARR';
+  }
+}
+
+/* ============================================================
+   9. SLIDER WIRING
+   ============================================================ */
+function initSliders() {
+  const sections = { revenue: 'sliders-revenue', costs: 'sliders-costs', cash: 'sliders-cash', seriesa: 'sliders-seriesa' };
+
+  for (const def of SLIDER_DEFS) {
+    const container = document.getElementById(sections[def.section]);
+    const group = document.createElement('div');
+    group.className = 'slider-group';
+    group.innerHTML = `
+      <div class="slider-label-row">
+        <label for="slider-${def.id}">${def.label}</label>
+        <span class="slider-value" id="val-${def.id}">${fmtSlider(def, state[def.id])}</span>
+      </div>
+      <input type="range" id="slider-${def.id}"
+        min="${def.min}" max="${def.max}" step="${def.step}" value="${state[def.id]}">
+    `;
+    container.appendChild(group);
+
+    const input = group.querySelector('input');
+    input.addEventListener('input', () => {
+      const val = parseFloat(input.value);
+      state[def.id] = val;
+      document.getElementById('val-' + def.id).textContent = fmtSlider(def, val);
+
+      // Constrain hire percentages: ZH + DE <= 100
+      if (def.id === 'hirePctZH' || def.id === 'hirePctDE') {
+        const zhVal = state.hirePctZH;
+        const deVal = state.hirePctDE;
+        if (zhVal + deVal > 100) {
+          if (def.id === 'hirePctZH') {
+            state.hirePctDE = 100 - zhVal;
+            document.getElementById('slider-hirePctDE').value = state.hirePctDE;
+            document.getElementById('val-hirePctDE').textContent = fmtSlider(
+              SLIDER_DEFS.find(d => d.id === 'hirePctDE'), state.hirePctDE);
+          } else {
+            state.hirePctZH = 100 - deVal;
+            document.getElementById('slider-hirePctZH').value = state.hirePctZH;
+            document.getElementById('val-hirePctZH').textContent = fmtSlider(
+              SLIDER_DEFS.find(d => d.id === 'hirePctZH'), state.hirePctZH);
+          }
+        }
+      }
+
+      scheduleRecalculate();
+    });
+  }
+}
+
+function syncSlidersToState() {
+  for (const def of SLIDER_DEFS) {
+    const input = document.getElementById('slider-' + def.id);
+    if (input) {
+      input.value = state[def.id];
+      document.getElementById('val-' + def.id).textContent = fmtSlider(def, state[def.id]);
+    }
+  }
+}
+
+function toggleSection(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
+function applyScenario(name) {
+  const preset = SCENARIOS[name];
+  if (!preset) return;
+  Object.assign(state, preset);
+  syncSlidersToState();
+  scheduleRecalculate();
+
+  // Update active button
+  document.querySelectorAll('.scenario-btn').forEach(btn => btn.classList.remove('active'));
+  const labels = { conservative: 0, base: 1, aggressive: 2 };
+  document.querySelectorAll('.scenario-btn')[labels[name]].classList.add('active');
+}
+
+/* ============================================================
+   10. RECALCULATE & BOOTSTRAP
+   ============================================================ */
+function recalculate() {
+  const results = calculateAll(state);
+  updateMetricCards(results);
+  renderARRChart(results.rev);
+  renderReceiptsChart(results.rev);
+  renderCustomerChart(results.rev);
+  renderBurnChart(results.costs);
+  renderHeadcountChart(results.costs);
+  renderCostPerEmpChart();
+  renderCashChart(results.cashData, results.costs, results.seriesA);
+  renderFXChart(results.fx);
+  updateRunwayCountdown(results.cashData, results.costs);
+  updateScorecard(results.seriesA, results.cashData, state);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initState();
+  initSliders();
+  recalculate();
+});
+</script>
+</body>
+</html>
