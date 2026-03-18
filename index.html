@@ -1288,12 +1288,12 @@ function renderCashChart(cashData, costs, seriesA) {
     shapes,
     annotations: seriesA.windowValid ? [{
       x: MONTH_LABELS[Math.round((seriesA.windowStart + Math.min(MONTHS - 1, Math.floor(seriesA.windowEnd))) / 2)],
-      y: 1,
+      y: 0.92,
       yref: 'paper',
       text: 'Fundraise Window',
       showarrow: false,
       font: { color: '#2dd4bf', size: 11 },
-      yanchor: 'bottom',
+      yanchor: 'top',
     }] : [],
   }), PLOTLY_CONFIG);
 }
