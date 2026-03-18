@@ -1149,40 +1149,36 @@ function renderCustomerChart(rev) {
   const data = [
     {
       x: MONTH_LABELS,
-      y: rev.pilots,
+      y: rev.paidCustomers,
       type: 'scatter',
+      mode: 'lines',
       fill: 'tozeroy',
-      fillcolor: 'rgba(167, 139, 250, 0.15)',
-      line: { color: '#a78bfa', width: 2 },
-      name: 'Active Pilots',
-      stackgroup: 'one',
+      fillcolor: 'rgba(52, 211, 153, 0.1)',
+      line: { color: '#34d399', width: 2.5 },
+      name: 'Paid Customers',
       hovertemplate: '%{y}<extra></extra>',
     },
     {
       x: MONTH_LABELS,
-      y: rev.paidCustomers,
+      y: rev.pilots,
       type: 'scatter',
-      fill: 'tonexty',
-      fillcolor: 'rgba(52, 211, 153, 0.15)',
-      line: { color: '#34d399', width: 2 },
-      name: 'Paid Customers',
-      stackgroup: 'one',
+      mode: 'lines',
+      line: { color: '#a78bfa', width: 2, dash: 'dot' },
+      name: 'Active Pilots',
       hovertemplate: '%{y}<extra></extra>',
     },
     {
       x: MONTH_LABELS,
       y: rev.churned,
       type: 'scatter',
-      fill: 'tonexty',
-      fillcolor: 'rgba(248, 113, 113, 0.15)',
+      mode: 'lines',
       line: { color: '#f87171', width: 2 },
       name: 'Churned',
-      stackgroup: 'one',
       hovertemplate: '%{y}<extra></extra>',
     },
   ];
   Plotly.react('chart-customers', data, getLayout({
-    yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, tickprefix: '' },
+    yaxis: { ...PLOTLY_LAYOUT_BASE.yaxis, tickprefix: '', range: [0, 60], dtick: 10 },
   }), PLOTLY_CONFIG);
 }
 
