@@ -719,12 +719,16 @@ const STARTING_HC = { zh: 15, de: 8, uk: 5 };
    ============================================================ */
 const SLIDER_DEFS = [
   // Revenue
+  { id: 'existingARR', label: 'Existing ARR (Mar 2026)', default: 200, min: 0, max: 1000, step: 25, section: 'revenue', format: 'eurK' },
   { id: 'acv', label: 'New Enterprise ACV', default: 80, min: 30, max: 200, step: 5, section: 'revenue', format: 'eurK' },
   { id: 'conversionRate', label: 'Pilot-to-Paid Conversion', default: 40, min: 10, max: 80, step: 5, section: 'revenue', format: 'pct' },
   { id: 'pilotsPerQ', label: 'New Pilots per Quarter', default: 4, min: 1, max: 12, step: 1, section: 'revenue', format: 'int' },
   { id: 'nrr', label: 'Net Revenue Retention', default: 110, min: 80, max: 150, step: 5, section: 'revenue', format: 'pct' },
   { id: 'daysToCollect', label: 'Avg Days to Collect', default: 60, min: 30, max: 120, step: 5, section: 'revenue', format: 'days' },
-  // Costs
+  // Costs — Starting headcount
+  { id: 'hcZH', label: 'Starting HC — Zurich', default: 15, min: 0, max: 40, step: 1, section: 'costs', format: 'int' },
+  { id: 'hcDE', label: 'Starting HC — Germany', default: 8, min: 0, max: 40, step: 1, section: 'costs', format: 'int' },
+  { id: 'hcUK', label: 'Starting HC — UK', default: 5, min: 0, max: 40, step: 1, section: 'costs', format: 'int' },
   { id: 'hiresPerQ', label: 'New Hires per Quarter', default: 3, min: 0, max: 8, step: 1, section: 'costs', format: 'int' },
   { id: 'hirePctZH', label: '% Hires in Zurich', default: 40, min: 0, max: 100, step: 5, section: 'costs', format: 'pct' },
   { id: 'hirePctDE', label: '% Hires in Germany', default: 35, min: 0, max: 100, step: 5, section: 'costs', format: 'pct' },
@@ -732,6 +736,7 @@ const SLIDER_DEFS = [
   { id: 'cloudSpend', label: 'Monthly Cloud Spend', default: 15, min: 5, max: 50, step: 1, section: 'costs', format: 'eurK' },
   { id: 'marketingSpend', label: 'Monthly Marketing Spend', default: 20, min: 5, max: 60, step: 1, section: 'costs', format: 'eurK' },
   // Cash & FX
+  { id: 'startingCash', label: 'Starting Cash (Mar 2026)', default: 7700, min: 1000, max: 15000, step: 100, section: 'cash', format: 'eurK' },
   { id: 'eurChf', label: 'EUR/CHF Rate', default: 0.93, min: 0.80, max: 1.05, step: 0.01, section: 'cash', format: 'fx' },
   { id: 'eurGbp', label: 'EUR/GBP Rate', default: 0.86, min: 0.75, max: 0.95, step: 0.01, section: 'cash', format: 'fx' },
   { id: 'rdTaxCredits', label: 'R&D Tax Credits (Annual)', default: 150, min: 0, max: 500, step: 10, section: 'cash', format: 'eurK' },
@@ -746,18 +751,18 @@ const SLIDER_DEFS = [
    ============================================================ */
 const SCENARIOS = {
   conservative: {
-    acv: 60, conversionRate: 20, pilotsPerQ: 2, nrr: 95, daysToCollect: 90,
-    hiresPerQ: 1, hirePctZH: 50, hirePctDE: 30, rampMonths: 6,
+    existingARR: 200, acv: 60, conversionRate: 20, pilotsPerQ: 2, nrr: 95, daysToCollect: 90,
+    hcZH: 15, hcDE: 8, hcUK: 5, hiresPerQ: 1, hirePctZH: 50, hirePctDE: 30, rampMonths: 6,
     cloudSpend: 10, marketingSpend: 10,
-    eurChf: 0.85, eurGbp: 0.80, rdTaxCredits: 50, grantIncome: 0,
+    startingCash: 7700, eurChf: 0.85, eurGbp: 0.80, rdTaxCredits: 50, grantIncome: 0,
     targetARR: 2000, minRunwayAtSA: 12,
   },
   base: Object.fromEntries(SLIDER_DEFS.map(s => [s.id, s.default])),
   aggressive: {
-    acv: 120, conversionRate: 60, pilotsPerQ: 6, nrr: 130, daysToCollect: 45,
-    hiresPerQ: 6, hirePctZH: 30, hirePctDE: 40, rampMonths: 3,
+    existingARR: 200, acv: 120, conversionRate: 60, pilotsPerQ: 6, nrr: 130, daysToCollect: 45,
+    hcZH: 15, hcDE: 8, hcUK: 5, hiresPerQ: 6, hirePctZH: 30, hirePctDE: 40, rampMonths: 3,
     cloudSpend: 25, marketingSpend: 40,
-    eurChf: 0.97, eurGbp: 0.90, rdTaxCredits: 300, grantIncome: 200,
+    startingCash: 7700, eurChf: 0.97, eurGbp: 0.90, rdTaxCredits: 300, grantIncome: 200,
     targetARR: 1000, minRunwayAtSA: 6,
   },
 };
@@ -794,7 +799,8 @@ function calculateRevenue(s) {
   const convRate = s.conversionRate / 100;
   const lagMonths = Math.ceil(s.daysToCollect / 30);
   const acv = s.acv * 1000;
-  const mrr0 = EXISTING_ARR / 12;
+  const existingARR = s.existingARR * 1000;
+  const mrr0 = existingARR / 12;
 
   const arr = [];
   const mrr = [];
@@ -805,7 +811,7 @@ function calculateRevenue(s) {
   const churned = [];
 
   let existingMRR = mrr0;
-  let totalPaid = Math.round(EXISTING_ARR / acv) || 3; // assume ~3 existing customers
+  let totalPaid = Math.round(existingARR / acv) || 3; // assume ~3 existing customers
   let totalChurned = 0;
   let cumulativePilots = 0;
 
@@ -878,9 +884,9 @@ function calculateCosts(s) {
   const costCloud = [], costMarketing = [], costOther = [];
   const totalBurn = [];
 
-  let currentZH = STARTING_HC.zh;
-  let currentDE = STARTING_HC.de;
-  let currentUK = STARTING_HC.uk;
+  let currentZH = s.hcZH;
+  let currentDE = s.hcDE;
+  let currentUK = s.hcUK;
 
   for (let m = 0; m < MONTHS; m++) {
     // Hire at quarter boundaries
@@ -923,7 +929,7 @@ function calculateCashRunway(s, rev, costs) {
   const grantMonth = 6;
   const grantAmount = s.grantIncome * 1000;
 
-  let balance = STARTING_CASH;
+  let balance = s.startingCash * 1000;
 
   for (let m = 0; m < MONTHS; m++) {
     cash.push(balance);
